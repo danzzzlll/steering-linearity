@@ -12,4 +12,5 @@ def load_model(model_name: str):
         device_map="auto",
         torch_dtype=torch.float16,
     )
+    model.eval()
     return tokenizer, model
