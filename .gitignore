@@ -1,1 +1,6 @@
 nervous_activations/
+test_env/
+test.ipynb
+__pycache__/
+version2/
+notebooks/manifold_metrics.py
