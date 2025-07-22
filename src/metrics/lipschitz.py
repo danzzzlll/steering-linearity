@@ -34,6 +34,7 @@ class Lipschitz(Metric):
         # ---------- PCA-256 (общее сжатие) ----------------------------
         self.X_small       = cache.get_x256(str(layer),      self.X)
         self.X_prev_small  = cache.get_x256(str(prev_layer), X_prev)
+        print("MAKE Lipschitz")
 
     def compute(self) -> dict[str, float]:          # type: ignore[override]
         knn = self.cache.get_knn(self.layer, self.X_small, k=self.k)   # (N, k)

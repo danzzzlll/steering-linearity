@@ -24,7 +24,7 @@ class Mapc(Metric):
     ):
         super().__init__(*a, k=k, **kw)
         self.svd_comp = svd_comp
-
+        print("MAKE MAPC ...")
 
     def compute(self) -> np.ndarray:                # type: ignore[override]
         X_use = self.cache.get_x256(self.layer, self.X)

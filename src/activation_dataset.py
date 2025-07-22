@@ -36,7 +36,7 @@ class ActivationDataset:
         )
 
     def __getitem__(self, layer_idx: Union[int, slice]):
-        return self.data[:, layer_idx, :]
+        return self.data[:10000, layer_idx, :]
 
     def layer_shape(self):
         """Форма конкретного слоя, не вытаскивая сам массив."""

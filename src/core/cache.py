@@ -7,6 +7,7 @@ import numpy as np
 import faiss
 from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
+from src.utils.faiss_helpers import knn_graph
 
 
 def _hash_params(params: dict[str, Any]) -> str:
@@ -59,26 +60,24 @@ class SharedCache:
         return self.pca[key]
 
 
-    def get_knn(
-        self,
-        layer: str,
-        X: np.ndarray,
-        *,
-        k: int = 20,
-        metric: str = "l2",
-    ) -> np.ndarray:
-        """
-        Возвращает индексы k ближайших соседей (без self):
-        shape = (N, k)
-        """
+    # def get_knn(
+    #     self,
+    #     layer: str,
+    #     X: np.ndarray,
+    #     *,
+    #     k: int = 20,
+    #     metric: str = "l2",
+    # ) -> np.ndarray:
+    #     """
+    #     Возвращает индексы k ближайших соседей (без self):
+    #     shape = (N, k)
+    #     """
+    def get_knn(self, layer, X, *, k=20, metric="l2") -> np.ndarray:
         key = (layer, _hash_params({"k": k, "metric": metric}))
         if key not in self.knn:
             if metric != "l2":
-                raise NotImplementedError("Пока реализован только L2 (faiss.IndexFlatL2)")
-            index = faiss.IndexFlatL2(X.shape[1])
-            index.add(X.astype(np.float32))
-            _, nn = index.search(X.astype(np.float32), k + 1)
-            self.knn[key] = nn[:, 1:]                 
+                raise NotImplementedError
+            self.knn[key] = knn_graph(X.astype("float32"), k)   # HNSW / GPU
         return self.knn[key]
 
 

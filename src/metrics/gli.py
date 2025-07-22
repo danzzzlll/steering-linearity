@@ -29,6 +29,7 @@ class GlobalLinearityIndex(Metric):
         super().__init__(*a, k=k, **kw)
         self.m = m
         self.rng = np.random.default_rng(seed)
+        print("MAKE GlobalLinearityIndex ...")
 
     def _geodesic_matrix(self) -> csr_matrix:
         """Возвращает матрицу кратчайших путей на графе k-NN (не взвешенный)."""

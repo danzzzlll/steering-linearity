@@ -36,6 +36,7 @@ class IsomapResidualVariance(Metric):
         self.n_landmark = n_landmark
         self.save_dir = Path(save_dir)
         self.save_dir.mkdir(exist_ok=True, parents=True)
+        print("MAKE IsomapResidualVariance")
 
         # ------- фиксированная подвыборка + PCA-256 -------------------
         idx  = cache.get_sample_idx(len(self.X), n_landmark)

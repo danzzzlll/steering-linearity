@@ -7,21 +7,17 @@ from src.core.metric_base import Metric
 
 class PersistentBetti(Metric):
     """
-    Вычисляет числа Бетти β₀, β₁, β₂, … для Rips-комплекса слоя.
+    Betti‑числа β₀, β₁, … для *Rips‑комплекса* landmark‑подвыборки.
 
-    Parameters
-    ----------
-    max_dim        : int    - до какой размерности строить комплекс
-    max_edge       : float  - макс. длина ребра (если  None → авто по 95-перц.)
-    use_pca        : bool   - сначала PCA до n_pca компонент
-    n_pca          : int    - сколько компонент оставить
-    random_state   : int    - seed для PCA
+    · landmark‑точки фиксируются через SharedCache (по слою);
+    · опционально предварительная PCA‑проекция до n_pca компонент.
     """
 
     def __init__(
         self,
         *a,
         max_dim: int = 3,
+        n_landmark: int = 2_000,
         max_edge: float | None = None,
         use_pca: bool = True,
         n_pca: int = 30,
@@ -30,37 +26,35 @@ class PersistentBetti(Metric):
     ):
         super().__init__(*a, **kw)
         self.max_dim = max_dim
-        self.max_edge = max_edge
-        self.use_pca = use_pca
-        self.n_pca = n_pca
-        self.random_state = random_state
 
-        # Проекция PCA (по желанию)
-        if use_pca:
-            pca = self.cache.get_pca(
+        pts = (
+            self.cache.get_pca(
                 self.layer,
                 self.X,
                 n_components=n_pca,
                 svd_solver="randomized",
                 random_state=random_state,
-            )
-            self.points = pca.transform(self.X).astype(np.float32)
-        else:
-            self.points = self.X.astype(np.float32)
+            ).transform(self.X)
+            if use_pca
+            else self.X
+        ).astype(np.float32)
 
-        if self.max_edge is None:
+        idx_land = self.cache.get_sample_idx(len(pts), n_landmark)
+        self.landmarks = pts[idx_land]
+
+        if max_edge is None:
             d = np.linalg.norm(
-                self.points[self.cache.rng.choice(len(self.points), 500, replace=True)]
-                - self.points[self.cache.rng.choice(len(self.points), 500, replace=True)],
+                pts[self.cache.rng.choice(len(pts), 500, replace=False)]
+                - pts[self.cache.rng.choice(len(pts), 500, replace=False)],
                 axis=1,
             )
-            self.max_edge = float(np.percentile(d, 95))
+            max_edge = np.percentile(d, 95)
+        self.max_edge = float(max_edge)
 
-
+    # ------------------------------------------------------------------
     def compute(self) -> Dict[str, int]:            # type: ignore[override]
-        rc = gd.RipsComplex(points=self.points, max_edge_length=self.max_edge)
+        rc = gd.RipsComplex(points=self.landmarks, max_edge_length=self.max_edge)
         st = rc.create_simplex_tree(max_dimension=self.max_dim)
-        st.persistence()  # нужен, чтобы betti_numbers() работал
-
+        st.compute_persistence()
         betti: List[int] = st.betti_numbers()
         return {f"beta_{i}": b for i, b in enumerate(betti)}

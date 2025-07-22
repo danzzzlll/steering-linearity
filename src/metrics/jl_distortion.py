@@ -6,15 +6,16 @@ from src.core.metric_base import Metric
 
 class JlDistortion(Metric):
     """
-    Измеряет, как меняются L2-дистанции при m случайных JL-проекциях.
+    Оценивает среднее относительное искажение L2‑дистанций
+    при m случайных Johnson–Lindenstrauss проекциях.
 
-    Parameters
-    ----------
-    d_code       : int   - размерность проекции
-    m_proj       : int   - сколько случайных матриц R
-    n_pairs      : int   - сколько случайных пар точек усреднять
-    random_state : int   - seed
-    use_pca      : bool  - если True, берём PCA-30 (как в ноутбуке)
+    Параметры
+    ---------
+    d_code        : размерность JL‑проекции
+    m_proj        : сколько случайных матриц (default 100)
+    n_pairs       : сколько пар точек усреднять
+    random_state  : seed
+    use_pca       : если True, берём PCA‑d_code; иначе усечение X[:, :d_code]
     """
 
     def __init__(
@@ -28,12 +29,11 @@ class JlDistortion(Metric):
         **kw,
     ):
         super().__init__(*a, **kw)
+
         self.d_code = d_code
         self.m_proj = m_proj
-        self.n_pairs = n_pairs
-        self.rng = np.random.default_rng(random_state)
+        rng = np.random.default_rng(random_state)
 
-        # Подготовка точки -> (N, d_code_base)
         if use_pca:
             pca = self.cache.get_pca(
                 self.layer,
@@ -42,31 +42,38 @@ class JlDistortion(Metric):
                 svd_solver="randomized",
                 random_state=random_state,
             )
-            self.base = pca.transform(self.X)  # (N, d_code)
+            base = pca.transform(self.X)
         else:
             if self.X.shape[1] < d_code:
                 raise ValueError("d_code больше исходной размерности")
-            self.base = self.X[:, : d_code] 
+            base = self.X[:, :d_code]
 
-        N = len(self.base)
-        self.pairs = self.rng.integers(N, size=(n_pairs, 2))
+        self.base = base.astype(np.float32)
 
-        i, j = self.pairs[:, 0], self.pairs[:, 1]
-        self.orig = np.linalg.norm(self.base[i] - self.base[j], axis=1)  # (n_pairs,)
+        idx_flat = self.cache.get_sample_idx(len(self.base), n_pairs * 2)
+        self.idx1, self.idx2 = idx_flat.reshape(-1, 2).T
+
+        self.orig = np.linalg.norm(
+            self.base[self.idx1] - self.base[self.idx2], axis=1
+        )
+
+        self.R0 = rng.normal(size=(d_code, d_code)).astype(np.float32) / np.sqrt(d_code)
+        self.rng = rng  # сохранённый генератор
+
+    def _random_R(self) -> np.ndarray:
+        """R = R0 * diag(±1). Сохраняет распределение JL,
+        но не создаёт d_code² новых чисел."""
+        signs = self.rng.choice([-1.0, 1.0], size=self.d_code).astype(np.float32)
+        return self.R0 * signs  # broadcasting по столбцам
 
     def compute(self) -> Dict[str, float]:  # type: ignore[override]
-        rel_errors = []
-        i, j = self.pairs[:, 0], self.pairs[:, 1]
-        d_code = self.d_code
+        i, j = self.idx1, self.idx2
+        rel_err = []
 
         for _ in range(self.m_proj):
-            R = self.rng.normal(size=(d_code, d_code)) / np.sqrt(d_code)
-            Y = self.base @ R
+            Y = self.base @ self._random_R()           # (N, d_code)
             proj = np.linalg.norm(Y[i] - Y[j], axis=1)
-            rel_errors.append(np.mean(np.abs(self.orig - proj) / (self.orig + 1e-9)))
+            rel_err.append(np.mean(np.abs(self.orig - proj) / (self.orig + 1e-9)))
 
-        delta = float(np.mean(rel_errors) * 100.0)  # %
-        return {
-            "delta_pct": delta,
-            "stable": bool(delta < 10.0),
-        }
+        delta = float(np.mean(rel_err) * 100.0)
+        return {"delta_pct": delta, "stable": bool(delta < 10.0)}
