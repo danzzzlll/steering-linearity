@@ -21,12 +21,16 @@ class PcaNComponents(Metric):
         **kw,
     ):
         super().__init__(*a, **kw)
-        self.target_var_ratio = float(target_var_ratio)
-        self.svd_solver = svd_solver
+        self.target_var_ratio = target_var_ratio
+        if isinstance(self.target_var_ratio, float):
+            self.svd_solver = "auto"
+        else:
+            self.svd_solver = svd_solver
         
     @timecount
     def compute(self) -> int:                      # type: ignore[override]
         print("MAKE PcaNComponents ...")
+        
         pca = self.cache.get_pca(
             self.layer,
             self.X.astype("float32"),
