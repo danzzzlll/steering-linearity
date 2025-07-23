@@ -36,6 +36,8 @@ class GlobalLinearityIndex(Metric):
         """Возвращает матрицу кратчайших путей на графе k-NN (не взвешенный)."""
         # кэшируем k-NN (N, k)
         knn = self.cache.get_knn(self.layer, self.X, k=self.k)     # (N, k)
+        knn = np.where(knn < 0, 0, knn)
+
         n = len(self.X)
 
         rows = np.repeat(np.arange(n), self.k)
@@ -52,13 +54,21 @@ class GlobalLinearityIndex(Metric):
         n = len(self.X)
 
         pairs = self.rng.integers(n, size=(self.m, 2))
+        mask = pairs[:, 0] != pairs[:, 1]
+        pairs = pairs[mask]
+
+        while len(pairs) < self.m:
+            new_pairs = self.rng.integers(n, size=(self.m - len(pairs), 2))
+            new_pairs = new_pairs[new_pairs[:, 0] != new_pairs[:, 1]]
+            pairs = np.vstack([pairs, new_pairs])
+
         idx_i, idx_j = pairs[:, 0], pairs[:, 1]
 
         geo = D_geo[idx_i, idx_j]
-        geo[np.isinf(geo)] = self.k + 1
+        geo[np.isinf(geo)] = np.max(D_geo[~np.isinf(D_geo)]) + 1
 
-        # евклидово расстояние между парами
-        eu = np.linalg.norm(self.X[idx_i] - self.X[idx_j], axis=1) + 1e-9
+        diff = self.X[idx_i] - self.X[idx_j]
+        eu = np.linalg.norm(diff, axis=1) + 1e-9
 
         print(float(np.mean(eu / geo)))
         print("MAKE GlobalLinearityIndex DONE")
