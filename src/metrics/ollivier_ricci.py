@@ -9,6 +9,7 @@ import networkx as nx
 from GraphRicciCurvature.OllivierRicci import OllivierRicci
 
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class OllivierRicciCurvature(Metric):
@@ -44,7 +45,7 @@ class OllivierRicciCurvature(Metric):
 
         # отдельный ключ для k‑NN графа Ricci
         self.layer_sub = f"{self.layer}_ricci"
-        print("MAKE OllivierRicciCurvature")
+        
 
     def _build_graph(self) -> nx.Graph:
         knn = self.cache.get_knn(self.layer_sub, self.X_proc, k=self.k)
@@ -55,7 +56,9 @@ class OllivierRicciCurvature(Metric):
                 G.add_edge(i, j, weight=1.0)
         return G
 
+    @timecount
     def compute(self) -> Dict[str, float]:          # type: ignore[override]
+        print("MAKE OllivierRicciCurvature ...")
         G = self._build_graph()
         orc = OllivierRicci(G, alpha=self.alpha, proc=0, verbose="ERROR")
         orc.compute_ricci_curvature()
@@ -64,6 +67,12 @@ class OllivierRicciCurvature(Metric):
             [d["ricciCurvature"] for _, _, d in G.edges(data=True)],
             dtype=np.float32,
         )
+        print({
+            "mean":  float(vals.mean()),
+            "std":   float(vals.std(ddof=1)),
+            "edges": int(len(vals)),
+        })
+        print("MAKE OllivierRicciCurvature DONE")
         return {
             "mean":  float(vals.mean()),
             "std":   float(vals.std(ddof=1)),

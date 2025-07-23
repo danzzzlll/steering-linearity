@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.linear_model import Ridge
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class Nlc(Metric):
@@ -47,7 +48,7 @@ class Nlc(Metric):
 
         # — собственный ключ для k‑NN, чтобы не делить с другими метриками
         self.layer_sub = f"{layer}_nlc"
-        print("MAKE Nlc")
+        
 
     def _secant_nlc(self) -> float:
         flat_idx = self.cache.get_sample_idx(len(self.Xc_small), self.n_pairs * 2)
@@ -58,6 +59,7 @@ class Nlc(Metric):
         num = np.linalg.norm(dH, axis=1)
         den = np.linalg.norm(dX @ self.W, axis=1) + 1e-9
         return float(np.mean(num / den))
+
 
     def _local_nlc(self) -> float:
         knn = self.cache.get_knn(self.layer_sub, self.Hc_small, k=self.k)
@@ -72,11 +74,14 @@ class Nlc(Metric):
         den = np.linalg.norm(dX @ self.W, axis=1) + 1e-9
         return float(np.mean(num / den))
 
+
     def _mse_linear(self) -> float:
         H_lin = self.Xc_small @ self.W
         return float(np.mean(np.linalg.norm(self.Hc_small - H_lin, axis=1)))
 
+    @timecount
     def compute(self) -> dict[str, float] | None:  # type: ignore[override]
+        print("MAKE Nlc ...")
         if self.layer == 0:
             return None
         print({
@@ -84,6 +89,7 @@ class Nlc(Metric):
             "local":  self._local_nlc(),
             "mse":    self._mse_linear(),
         })
+        print("MAKE Nlc DONE")
         return {
             "secant": self._secant_nlc(),
             "local":  self._local_nlc(),

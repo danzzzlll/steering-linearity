@@ -1,5 +1,5 @@
 from src.core.metric_base import Metric
-
+from src.utils.time_decorator import timecount
 
 class IsotropyRatio(Metric):
     """
@@ -33,9 +33,10 @@ class IsotropyRatio(Metric):
             svd_solver=svd_solver,
             random_state=random_state,
         )
-        print("MAKE IsotropyRatio")
-
+        
+    @timecount
     def compute(self) -> float:                     # type: ignore[override]
+        print("MAKE IsotropyRatio ...")
         pca = self.cache.get_pca(
             self.layer,
             self.X.astype("float32"),
@@ -44,4 +45,5 @@ class IsotropyRatio(Metric):
         var = pca.explained_variance_
         iso_ratio = float(var[0] / var.mean())
         print(f"Isotropy‑ratio: {iso_ratio:.2f}")
+        print("MAKE IsotropyRatio DONE")
         return iso_ratio

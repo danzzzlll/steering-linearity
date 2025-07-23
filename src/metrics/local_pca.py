@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class LocalPcaReconError(Metric):
@@ -23,10 +24,11 @@ class LocalPcaReconError(Metric):
 
         # собственный ключ для k‑NN, чтобы не перезаписать граф всего слоя
         self.layer_sub = f"{self.layer}_sub"
-        print("MAKE LocalPcaReconError")
-
+        
+    @timecount
     def compute(self) -> float:             # type: ignore[override]
         knn = self.cache.get_knn(self.layer_sub, self.X_use, k=self.k)  # (M, k)
+        print("MAKE LocalPcaReconError ...")
 
         errs = []
         for i, neigh in tqdm(
@@ -47,5 +49,7 @@ class LocalPcaReconError(Metric):
             xi     = self.X_use[i] - mu.squeeze()
             recon  = mu.squeeze() + basis @ (basis.T @ xi)
             errs.append(np.linalg.norm(xi - recon))
+        print(float(np.mean(errs)))
 
+        print("MAKE LocalPcaReconError DONE")
         return float(np.mean(errs))

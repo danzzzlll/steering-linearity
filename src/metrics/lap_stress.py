@@ -9,7 +9,7 @@ from sklearn.manifold import SpectralEmbedding
 from sklearn.metrics import pairwise_distances
 
 from src.core.metric_base import Metric
-
+from src.utils.time_decorator import timecount
 
 class LaplacianStressCurve(Metric):
     """
@@ -43,7 +43,7 @@ class LaplacianStressCurve(Metric):
         self.X_sub = cache.get_x256(str(layer), self.X)[idx]
 
         self.layer_sub = f"{layer}_sub"
-        print("MAKE LaplacianStressCurve ...")
+        
 
     def _adjacency(self) -> csr_matrix:
         """0/1‑матрица смежности на графе k‑NN landmark‑точек."""
@@ -57,6 +57,7 @@ class LaplacianStressCurve(Metric):
         A[A > 1] = 1
         return A
 
+
     @staticmethod
     def _stress(A: csr_matrix, embed: np.ndarray) -> float:
         """||D_graph − D_embed|| / ||D_graph||"""
@@ -64,7 +65,9 @@ class LaplacianStressCurve(Metric):
         De = pairwise_distances(embed)
         return float(np.linalg.norm(Dg - De) / np.linalg.norm(Dg))
 
+    @timecount
     def compute(self) -> Tuple[np.ndarray, np.ndarray]:   # type: ignore[override]
+        print("MAKE LaplacianStressCurve ...")
         A = self._adjacency()
 
         stress_vals = []
@@ -85,5 +88,5 @@ class LaplacianStressCurve(Metric):
         fig.savefig(self.save_dir / f"lap_stress_L{self.layer}.png",
                     dpi=150, bbox_inches="tight")
         plt.close(fig)
-
+        print("MAKE LaplacianStressCurve DONE")
         # return np.asarray(self.dims), np.asarray(stress_vals)

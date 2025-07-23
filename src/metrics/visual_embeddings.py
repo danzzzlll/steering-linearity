@@ -7,6 +7,7 @@ from sklearn.manifold import Isomap
 import umap
 
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class UmapIsomapPlot(Metric):
@@ -35,9 +36,10 @@ class UmapIsomapPlot(Metric):
         self.umap_min_dist = umap_min_dist
         self.random_state = random_state
         self.plot_dir = Path(plot_dir); self.plot_dir.mkdir(exist_ok=True, parents=True)
-        print("MAKE UmapIsomapPlot")
-
+        
+    @timecount
     def compute(self) -> Tuple[np.ndarray, np.ndarray]:  # type: ignore[override]
+        print("MAKE UmapIsomapPlot ...")
         pca = self.cache.get_pca(
             self.layer,
             self.X,
@@ -70,5 +72,5 @@ class UmapIsomapPlot(Metric):
         fig.savefig(self.plot_dir / f"umap_isomap_L{self.layer}.png",
                     dpi=150, bbox_inches="tight")
         plt.close(fig)
-
+        print("MAKE UmapIsomapPlot DONE")
         # return XY_umap, XY_iso

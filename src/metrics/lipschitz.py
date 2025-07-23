@@ -1,6 +1,6 @@
 import numpy as np
 from src.core.metric_base import Metric
-
+from src.utils.time_decorator import timecount
 
 class Lipschitz(Metric):
     """
@@ -34,9 +34,10 @@ class Lipschitz(Metric):
         # ---------- PCA-256 (общее сжатие) ----------------------------
         self.X_small       = cache.get_x256(str(layer),      self.X)
         self.X_prev_small  = cache.get_x256(str(prev_layer), X_prev)
-        print("MAKE Lipschitz")
-
+        
+    @timecount
     def compute(self) -> dict[str, float]:          # type: ignore[override]
+        print("MAKE Lipschitz ...")
         knn = self.cache.get_knn(self.layer, self.X_small, k=self.k)   # (N, k)
 
         i_idx = np.repeat(np.arange(len(self.X_small)), self.k)
@@ -46,7 +47,12 @@ class Lipschitz(Metric):
         dh = self.X_small[i_idx]      - self.X_small[j_idx]
 
         ratios = np.linalg.norm(dh, axis=1) / (np.linalg.norm(dx, axis=1) + 1e-9)
-
+        print({
+            "mean":  float(ratios.mean()),
+            "p95":   float(np.percentile(ratios, 95)),
+            "count": int(ratios.size),
+        })
+        print("MAKE Lipschitz DONE")
         return {
             "mean":  float(ratios.mean()),
             "p95":   float(np.percentile(ratios, 95)),

@@ -4,6 +4,7 @@ import scipy.linalg as la
 from tqdm import tqdm
 
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class Mapc(Metric):
@@ -24,9 +25,10 @@ class Mapc(Metric):
     ):
         super().__init__(*a, k=k, **kw)
         self.svd_comp = svd_comp
-        print("MAKE MAPC ...")
-
+        
+    @timecount
     def compute(self) -> np.ndarray:                # type: ignore[override]
+        print("MAKE MAPC ...")
         X_use = self.cache.get_x256(self.layer, self.X)
         knn = self.cache.get_knn(self.layer, X_use, k=self.k)  # shape (N, k)
         n_pts, dim = X_use.shape
@@ -51,4 +53,5 @@ class Mapc(Metric):
             mapc[i] = np.mean(np.linalg.norm(neigh_normals - n_vec, axis=1))
         mapc_mean = mapc.mean()
         print(f"MAPC metric: {mapc_mean}")
+        print("MAKE MAPC DONE")
         return mapc_mean

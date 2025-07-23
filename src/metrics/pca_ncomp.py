@@ -1,4 +1,5 @@
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class PcaNComponents(Metric):
@@ -22,9 +23,10 @@ class PcaNComponents(Metric):
         super().__init__(*a, **kw)
         self.target_var_ratio = float(target_var_ratio)
         self.svd_solver = svd_solver
-        print("MAKE PcaNComponents")
-
+        
+    @timecount
     def compute(self) -> int:                      # type: ignore[override]
+        print("MAKE PcaNComponents ...")
         pca = self.cache.get_pca(
             self.layer,
             self.X.astype("float32"),
@@ -33,4 +35,5 @@ class PcaNComponents(Metric):
         )
         n_comp = int(pca.n_components_)
         print(f"PCA components to reach {self.target_var_ratio:.0%}: {n_comp}")
+        print("MAKE PcaNComponents DONE")
         return n_comp

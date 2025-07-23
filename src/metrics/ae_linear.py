@@ -8,6 +8,7 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class _LinearAE(nn.Module):
@@ -122,8 +123,9 @@ class AutoencoderLinearity(Metric):
                 n += x.numel()
         return s / n
 
-
+    @timecount
     def compute(self) -> Dict[str, float]:  # type: ignore[override]
+        print("MAKE AE ...")
         train_loader, test_loader, d_in = self._prepare_data()
 
         lin_ae = _LinearAE(d_in, self.d_code)
@@ -135,6 +137,13 @@ class AutoencoderLinearity(Metric):
             nonlin_ae, train_loader, self.epochs, self.lr, self.device
         )
         mse_nonlin = self._eval_mse(nonlin_ae, test_loader, self.device)
+
+        print({
+            "mse_linear": float(mse_lin),
+            "mse_nonlin": float(mse_nonlin),
+            "ratio": float(mse_nonlin / mse_lin),
+        })
+        print("MAKE AE DONE")
 
         return {
             "mse_linear": float(mse_lin),

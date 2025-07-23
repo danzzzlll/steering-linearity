@@ -8,6 +8,7 @@ from sklearn.metrics import pairwise_distances
 from tqdm import tqdm
 
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class IsomapResidualVariance(Metric):
@@ -36,13 +37,15 @@ class IsomapResidualVariance(Metric):
         self.n_landmark = n_landmark
         self.save_dir = Path(save_dir)
         self.save_dir.mkdir(exist_ok=True, parents=True)
-        print("MAKE IsomapResidualVariance")
+        
 
         # ------- фиксированная подвыборка + PCA-256 -------------------
         idx  = cache.get_sample_idx(len(self.X), n_landmark)
         self.X_sub = cache.get_x256(str(layer), self.X)[idx]
 
+    @timecount
     def compute(self) -> Tuple[np.ndarray, np.ndarray]:  # type: ignore[override]
+        print("MAKE IsomapResidualVariance ...")
         rv = []
         D_geo = self.cache.get_isomap_geodesic(
             f"{self.layer}_sub", self.X_sub, k=self.k, path_method="auto"
@@ -68,4 +71,5 @@ class IsomapResidualVariance(Metric):
         fig.savefig(self.save_dir / f"isomap_rv_L{self.layer}.png",
                     dpi=150, bbox_inches="tight")
         plt.close(fig)
+        print("MAKE IsomapResidualVariance DONE")
         # return np.asarray(self.dims), np.asarray(rv)

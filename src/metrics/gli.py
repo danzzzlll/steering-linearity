@@ -5,6 +5,7 @@ import faiss
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import shortest_path
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class GlobalLinearityIndex(Metric):
@@ -29,7 +30,7 @@ class GlobalLinearityIndex(Metric):
         super().__init__(*a, k=k, **kw)
         self.m = m
         self.rng = np.random.default_rng(seed)
-        print("MAKE GlobalLinearityIndex ...")
+        
 
     def _geodesic_matrix(self) -> csr_matrix:
         """Возвращает матрицу кратчайших путей на графе k-NN (не взвешенный)."""
@@ -44,8 +45,9 @@ class GlobalLinearityIndex(Metric):
         D_geo = shortest_path(A, directed=False, unweighted=True, return_predecessors=False)
         return D_geo
 
-    # ------------------------------------------------------------------ #
+    @timecount
     def compute(self) -> float:                     # type: ignore[override]
+        print("MAKE GlobalLinearityIndex ...")
         D_geo = self._geodesic_matrix()             # (N, N)
         n = len(self.X)
 
@@ -58,4 +60,6 @@ class GlobalLinearityIndex(Metric):
         # евклидово расстояние между парами
         eu = np.linalg.norm(self.X[idx_i] - self.X[idx_j], axis=1) + 1e-9
 
+        print(float(np.mean(eu / geo)))
+        print("MAKE GlobalLinearityIndex DONE")
         return float(np.mean(eu / geo))

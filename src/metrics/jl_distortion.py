@@ -2,6 +2,7 @@ from typing import Dict
 
 import numpy as np
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class JlDistortion(Metric):
@@ -60,13 +61,16 @@ class JlDistortion(Metric):
         self.R0 = rng.normal(size=(d_code, d_code)).astype(np.float32) / np.sqrt(d_code)
         self.rng = rng  # сохранённый генератор
 
+
     def _random_R(self) -> np.ndarray:
         """R = R0 * diag(±1). Сохраняет распределение JL,
         но не создаёт d_code² новых чисел."""
         signs = self.rng.choice([-1.0, 1.0], size=self.d_code).astype(np.float32)
         return self.R0 * signs  # broadcasting по столбцам
 
+    @timecount
     def compute(self) -> Dict[str, float]:  # type: ignore[override]
+        print("MAKE JlDistortion ...")
         i, j = self.idx1, self.idx2
         rel_err = []
 
@@ -76,4 +80,6 @@ class JlDistortion(Metric):
             rel_err.append(np.mean(np.abs(self.orig - proj) / (self.orig + 1e-9)))
 
         delta = float(np.mean(rel_err) * 100.0)
+        print({"delta_pct": delta, "stable": bool(delta < 10.0)})
+        print("MAKE JlDistortion DONE")
         return {"delta_pct": delta, "stable": bool(delta < 10.0)}

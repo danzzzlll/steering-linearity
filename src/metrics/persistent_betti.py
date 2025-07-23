@@ -3,6 +3,7 @@ from typing import Dict, List
 import numpy as np
 import gudhi as gd
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
 
 
 class PersistentBetti(Metric):
@@ -51,10 +52,13 @@ class PersistentBetti(Metric):
             max_edge = np.percentile(d, 95)
         self.max_edge = float(max_edge)
 
-    # ------------------------------------------------------------------
+    @timecount
     def compute(self) -> Dict[str, int]:            # type: ignore[override]
+        print("MAKE PersistentBetti ...")
         rc = gd.RipsComplex(points=self.landmarks, max_edge_length=self.max_edge)
         st = rc.create_simplex_tree(max_dimension=self.max_dim)
         st.compute_persistence()
         betti: List[int] = st.betti_numbers()
+        print({f"beta_{i}": b for i, b in enumerate(betti)})
+        print("MAKE PersistentBetti DONE")
         return {f"beta_{i}": b for i, b in enumerate(betti)}

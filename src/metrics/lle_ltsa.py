@@ -1,6 +1,8 @@
 from typing import Literal
 from sklearn.manifold import LocallyLinearEmbedding
 from src.core.metric_base import Metric
+from src.utils.time_decorator import timecount
+
 
 class _BaseLleError(Metric):
     _method: Literal["ltsa", "standard"] = "standard"
@@ -20,7 +22,7 @@ class _BaseLleError(Metric):
         self.eigen_solver = eigen_solver
         super().__init__(ds, cache, layer, k=k, norm=norm)
 
-    # ——— вычисление ----------------------------------------------------
+    @timecount
     def compute(self) -> float:                      # type: ignore[override]
         lle = LocallyLinearEmbedding(
             n_neighbors=self.k,
