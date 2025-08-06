@@ -8,6 +8,8 @@ import faiss
 from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
 from src.utils.faiss_helpers import knn_graph
+from torch_pca import PCA as TorchPCA
+import torch
 
 
 def _hash_params(params: dict[str, Any]) -> str:
@@ -58,6 +60,18 @@ class SharedCache:
         if key not in self.pca:
             self.pca[key] = PCA(**pca_kw).fit(X)
         return self.pca[key]
+        # key = (layer, _hash_params(pca_kw))
+        # if key in self.pca:
+        #     return self.pca[key]
+        
+        # device = "cuda" if torch.cuda.is_available() else "cpu"
+        # X_tensor = torch.as_tensor(X, dtype=torch.float32, device=device)
+
+        # pca_model: Any = TorchPCA(**pca_kw)
+        # pca_model.fit(X_tensor)
+
+        # self.pca[key] = pca_model
+        # return pca_model
 
 
     # def get_knn(
