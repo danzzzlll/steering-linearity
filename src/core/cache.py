@@ -8,7 +8,6 @@ import faiss
 from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
 from src.utils.faiss_helpers import knn_graph
-from torch_pca import PCA as TorchPCA
 import torch
 
 
@@ -60,32 +59,8 @@ class SharedCache:
         if key not in self.pca:
             self.pca[key] = PCA(**pca_kw).fit(X)
         return self.pca[key]
-        # key = (layer, _hash_params(pca_kw))
-        # if key in self.pca:
-        #     return self.pca[key]
-        
-        # device = "cuda" if torch.cuda.is_available() else "cpu"
-        # X_tensor = torch.as_tensor(X, dtype=torch.float32, device=device)
-
-        # pca_model: Any = TorchPCA(**pca_kw)
-        # pca_model.fit(X_tensor)
-
-        # self.pca[key] = pca_model
-        # return pca_model
 
 
-    # def get_knn(
-    #     self,
-    #     layer: str,
-    #     X: np.ndarray,
-    #     *,
-    #     k: int = 20,
-    #     metric: str = "l2",
-    # ) -> np.ndarray:
-    #     """
-    #     Возвращает индексы k ближайших соседей (без self):
-    #     shape = (N, k)
-    #     """
     def get_knn(self, layer, X, *, k=20, metric="l2") -> np.ndarray:
         key = (layer, _hash_params({"k": k, "metric": metric}))
         if key not in self.knn:
