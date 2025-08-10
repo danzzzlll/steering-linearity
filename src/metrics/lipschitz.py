@@ -55,6 +55,6 @@ class Lipschitz(Metric):
         print("MAKE Lipschitz DONE")
         return {
             "mean":  float(ratios.mean()),
-            "p95":   float(np.percentile(ratios, 95)),
-            "count": int(ratios.size),
+            # "p95":   float(np.percentile(ratios, 95)),
+            # "count": int(ratios.size),
         }

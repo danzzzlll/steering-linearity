@@ -81,17 +81,10 @@ class Nlc(Metric):
 
     @timecount
     def compute(self) -> dict[str, float] | None:  # type: ignore[override]
-        print("MAKE Nlc ...")
         if self.layer == 0:
             return None
-        print({
-            "secant": self._secant_nlc(),
-            "local":  self._local_nlc(),
-            "mse":    self._mse_linear(),
-        })
-        print("MAKE Nlc DONE")
         return {
-            "secant": self._secant_nlc(),
-            "local":  self._local_nlc(),
+            # "secant": self._secant_nlc(),
+            # "local":  self._local_nlc(),
             "mse":    self._mse_linear(),
         }
