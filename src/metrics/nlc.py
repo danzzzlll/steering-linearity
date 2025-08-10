@@ -83,8 +83,9 @@ class Nlc(Metric):
     def compute(self) -> dict[str, float] | None:  # type: ignore[override]
         if self.layer == 0:
             return None
-        return {
-            # "secant": self._secant_nlc(),
-            # "local":  self._local_nlc(),
-            "mse":    self._mse_linear(),
-        }
+        # return {
+        #     # "secant": self._secant_nlc(),
+        #     # "local":  self._local_nlc(),
+        #     "mse":    self._mse_linear(),
+        # }
+        return self._mse_linear()

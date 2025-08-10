@@ -82,4 +82,5 @@ class JlDistortion(Metric):
         delta = float(np.mean(rel_err) * 100.0)
         print({"delta_pct": delta, "stable": bool(delta < 10.0)})
         print("MAKE JlDistortion DONE")
-        return {"delta_pct": delta, "stable": bool(delta < 10.0)}
+        # return {"delta_pct": delta, "stable": bool(delta < 10.0)}
+        return delta
