@@ -88,7 +88,7 @@ class EulerCharacteristicCurve(Metric):
         deficit = np.maximum(0.0, 1.0 - chi_norm)           # ниже 1
         ecc_deficit_auc = float(np.trapz(deficit, alpha))   # ↓ лучше
     
-        return 1 / (1 + ecc_deficit_auc)
+        return ecc_deficit_auc
 
 
     def _get_undirected_edges_with_weights(self):
