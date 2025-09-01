@@ -8,3 +8,6 @@ results/
 report/
 torch_pca/
 ToDelete.md
+server/
+notebooks/
+first.py
